@@ -1,0 +1,122 @@
+"""
+Run 1D Kuramoto–Sivashinsky (KS) equation in nonconservative form 
+using `KS1D_h` class from KS_solver.
+"""
+
+import numpy as np
+import torch
+from KS_solver import KS1D_h
+
+torch.backends.cudnn.deterministic = True
+
+# Set model param
+param = {
+    'Lx': 1e4, # length param
+    'nx': int(1e4), # grid points
+    'n_ens': 1, # ensemble size
+    'dt': 1., # timestep
+    'rand_forcing': True, # additive noise: True or False
+    'sigma': 1e-3, # amplitude of random forcing 
+    'dtype': torch.float64, # torch.float32 or torch.float64
+    'device': 'cuda' if torch.cuda.is_available() else 'cpu', # 'cuda' or 'cpu'
+}
+ks1 = KS1D_h(param)
+
+# Set initital condition
+t = 0
+if ks1.rand_forcing:
+    ks1.h[:,:] = 0. # quiesient state for SPDE
+else:
+    ks1.h = 2e-2*(torch.rand_like(ks1.h)-0.5) # random pertubation for PDE
+
+# Set control param
+n_steps = int(1e5/ks1.dt)+1
+freq_checknan = 100
+freq_log = 1000
+freq_plot = 0
+diag_spec = True
+diag_t0 = 100
+freq_save = n_steps//1000
+n_steps_save = 0
+outdir = f'data/KS1D_h/L{int(ks1.Lx)}'
+
+# Init. output
+if freq_save > 0:
+    import os
+    os.makedirs(outdir) if not os.path.isdir(outdir) else None
+    filename = os.path.join(outdir, 'param.pth')
+    torch.save(param, filename)
+    filename = os.path.join(outdir, f'h_{n_steps_save}.npz')
+    np.savez(filename, t=float(t), h=ks1.h.cpu().numpy())
+    n_steps_save += 1
+    
+# Init. figures
+if freq_plot > 0:
+    import matplotlib.pyplot as plt
+    plt.ion() 
+    fig, ax = plt.subplots()
+    plt_kwargs = dict(
+        ylim=(-10, 10),
+        xlabel=r'$x$',
+        ylabel=r'$h$',
+        title=f'$t = {t:.2f}$',
+    )
+    line, = ax.plot(ks1.x.cpu().numpy(), ks1.h[0].cpu().numpy())
+    ax.set(**plt_kwargs)
+    ax.grid(True)
+    fig.tight_layout()
+    plt.pause(1)
+
+if diag_spec:
+    hpsd = torch.zeros_like(ks1.h)
+    npsd = 0
+
+# Time-stepping
+for n in range(1, n_steps+1):
+    ks1.step()
+    t += ks1.dt
+
+    if n % freq_checknan == 0 and torch.isnan(ks1.h).any():
+        raise ValueError('Stopping, NAN number at iteration {n}.')
+
+    if freq_plot > 0 and n % freq_plot == 0:       
+        h = ks1.h[0].cpu().numpy()
+        line.set_ydata(h)
+        ax.set_title(f"$t = {t:.2f}$")
+        ax.set_ylim((h.min(), h.max()))
+        fig.canvas.draw_idle()
+        plt.pause(0.02)
+
+    if freq_log > 0 and n % freq_log == 0:
+        log_str = f'{n=:06d}, t={t:.3f}, hmean={ks1.h.mean().cpu().numpy():+.2E}, hmax={ks1.h.max().cpu().numpy():.2E}, hrms={(ks1.h**2).mean().sqrt().cpu().numpy():.2E}.'
+        print(log_str)
+
+    if freq_save > 0 and n % freq_save == 0:
+        filename = os.path.join(outdir, f'h_{n_steps_save}.npz')
+        np.savez(filename, t=float(t), h=ks1.h.cpu().numpy())
+        n_steps_save += 1
+        if n % (10*freq_save) == 0:
+            print(f'saved h to {filename}')
+        
+    if diag_spec and t >= diag_t0:
+        h = ks1.h - ks1.h.mean(dim=-1)
+        hpsd += abs(torch.fft.fft(h))**2 / ks1.nx**2
+        npsd += 1
+
+print('********** END OF SIMULATION **********')
+
+if freq_plot > 0:
+    plt.ioff()
+
+if diag_spec:
+    k = ks1.k.cpu().numpy()
+    hpsd = (hpsd/npsd).mean(dim=0).cpu().numpy()
+    
+    import matplotlib.pyplot as plt
+    fig_, ax_ = plt.subplots(tight_layout=True)
+    ax_.loglog(k, hpsd)
+    ax_.set(xlabel='$k$', ylabel='PSD ($k$)', title='Mean spectrum')
+    ax_.set_ylim(bottom=1e-8)
+    ax_.grid(which='both', axis='both')
+    plt.show()
+
