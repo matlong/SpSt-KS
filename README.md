@@ -1,8 +1,9 @@
 # SpSt-KS
 
 ## Description
-Project: Spontaneous Stochasticity of the Kuramoto–Sivashinsky (KS) equations. It is for the Fall school in turbulence: October 21-31, 2025, Institut d’Études scientifiques de Cargèse, Corsica, France.  
-[https://turbazur.github.io/cargese2025/]
+Project: Spontaneous Stochasticity of the Kuramoto–Sivashinsky (KS) equations. 
+
+It is for the Fall school in turbulence [https://turbazur.github.io/cargese2025]: October 21-31, 2025, Institut d’Études scientifiques de Cargèse, Corsica, France.  
 
 The solver is implemented in PyTorch with pseudo spectral method and Strang splitting expontential integrator.
 
