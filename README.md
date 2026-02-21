@@ -1,8 +1,10 @@
-# Project SpSt-KS: Spontaneous stochasticity of the Kuramoto-Sivashinsky (KS) equation
+# SpSt-KS
 
 ## Description
+Project: Spontaneous Stochasticity of the Kuramoto–Sivashinsky (KS) equations. It is for the Fall school in turbulence: October 21-31, 2025, Institut d’Études scientifiques de Cargèse, Corsica, France.  
+[https://turbazur.github.io/cargese2025/]
 
-TODO
+The solver is implemented in PyTorch with pseudo spectral method and Strang splitting expontential integrator.
 
 ## Getting Started
 
@@ -14,18 +16,13 @@ TODO
 
 ### Installing
 
-TODO: git clone ...
+git clone https://github.com/matlong/SpSt-KS.git
 
 * To install PyTorch with conda for CPU-only users:
 ```
 conda create -n torch python=3.10 -y
 conda activate torch
 conda install pytorch torchvision torchaudio cpuonly -c pytorch
-```
-
-* You can also use pip to install:
-```
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
 * To install on GPU:
@@ -48,7 +45,6 @@ python run_ks1d_h.py
 
 * The KS equation solvers are in the module `KS_solver.py`.
 
-* The jupyter notebook `plot_figure.ipynb` is used to compute and show some diagnostics of the results.
 
 <!---
 ## Help
@@ -61,9 +57,9 @@ command to run if program contains helper info
 
 ## Authors
 
-By all of us.
+Long LI
 
-Contact: 
+Contact: long.li@inria.fr
 
 <!---
 ex. Dominique Pizzie  
@@ -78,7 +74,6 @@ ex. [@DomPizzie](https://twitter.com/dompizzie)
     * See [commit change]() or See [release history]()
 * 0.1
     * Initial Release
--->
 
 ## Citation
 
@@ -87,6 +82,7 @@ TODO
 ## Acknowledgments
 
 The authors acknowledge ...
+-->
 
 ## License
 
